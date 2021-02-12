@@ -52,7 +52,7 @@ conexao.query('INSERT INTO contato SET ?', post, ()=>{
 })
 
 //pagina de pedidos - metodo get (mostrar os informações de pedidos)
-
+//usando mongodb 
 //models
 require('./src/models/Pedido')
 const Pedido = mongoose.model('pedidos')
