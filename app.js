@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const mongoose = require('mongoose')
 
 app.use(cors());
 
@@ -51,50 +52,50 @@ conexao.query('INSERT INTO contato SET ?', post, ()=>{
 })
 
 //pagina de pedidos - metodo get (mostrar os informações de pedidos)
-app.get('/pedidos', (req, res) =>{
-    const mysql = require('mysql');
-    const connection = mysql.createConnection({
-        host: 'localhost',
-        user: 'jaque',
-        password: 'somentesenha',
-        database: 'projetoeletro'
-    });
 
-    connection.query("SELECT * from tb_pedidos INNER JOIN produtos ON tb_pedidos.produto = produtos.idproduto;", (error, result)=>{
-        
-    if(error){
-        console.log(error)
-    }
-    res.json(result);
-    })  
-})
+//models
+require('./src/models/Pedido')
+const Pedido = mongoose.model('pedidos')
 
-app.post('/pedidos', (req, res) =>{
-    const mysqlPedido = require('mysql');
-    const conexao = mysqlPedido.createConnection({
-        host: 'localhost',
-        user: 'jaque',
-        password: 'somentesenha',
-        database: 'projetoeletro'
-    });
-    
-    let post = [];
+//conexao db
+require('./src/db/connect')
 
-    //colocando os dados na array
-    post.push({
+app.get('/pedidos', async(req,res) => {
+    const pedidosResponse = await Pedido.find()
+    const pedidosJson = await pedidosResponse
+
+    return res.json(pedidosJson)
+});
+
+app.post('/pedidos', async(req,res) =>{
+    const novoPedido = new Pedido({
         nome: req.body.nome,
         cidade: req.body.cidade,
         produto: req.body.produto,
         quantidade: req.body.quantidade
-    });
+    })
+    novoPedido.save()
 
-// com ? é passagens de parâmetros
-conexao.query('INSERT INTO tb_pedidos SET ?', post, ()=>{
-    post = [];
-    return res.json({message: "Dados enviados com sucesso"})
+    res.json({message: "Pedido Concluido com sucesso", pedido: novoPedido})
+});
+
+app.put('/pedidos/:id', async(req,res) => {
+    const { id } = req.params
+    //pesquisa por um unico usuario
+    const pedido = await Pedido.findOne({_id: id})
+
+    //alterando os dados existentes
+    pedido.nome = req.body.nome
+    pedido.cidade = req.body.cidade
+    pedido.produto = req.body.produto
+    pedido.quantidade = req.body.quantidade
+
+
+    //salvando alteração
+    pedido.save()
+
+    res.json({message: "Pedido Alterado"})
 })
-
-})   
 
 
 app.listen(3333, ()=> {
